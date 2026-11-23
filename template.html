@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>India markets & macro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202e;--mut:#5b6677;--line:#dde1e8;--acc:#0b6e69;--up:#1a7f4b;--dn:#b3372f}
+@media(prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#171e28;--ink:#e8ecf2;--mut:#98a3b3;--line:#273041;--acc:#4fc3bb;--up:#52c68a;--dn:#ef7c74}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+nav{display:flex;gap:20px;align-items:baseline;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+nav b{font:600 18px Georgia,serif;margin-right:auto}nav a{color:var(--mut);text-decoration:none}nav a.on{color:var(--acc);font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:20px}h1{font:600 28px Georgia,serif;margin:8px 0 4px}.sub{color:var(--mut);margin:0 0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:99px;cursor:pointer;font:inherit}
+.chips button.on{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+h2{font:600 19px Georgia,serif;margin:28px 0 12px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px}.card h3{margin:0;font-size:15px}
+.big{font-size:24px;font-weight:600}.chg{font-size:13px;margin-left:6px}.up{color:var(--up)}.dn{color:var(--dn)}
+.ch{height:130px;margin:8px 0}.meta{font-size:12px;color:var(--mut)}.meta a{color:var(--mut)}
+details{margin-top:8px;font-size:13px}summary{cursor:pointer;color:var(--acc)}details p{margin:6px 0 0}
+.empty{height:130px;display:grid;place-items:center;text-align:center;color:var(--mut);font-size:13px;border:1px dashed var(--line);border-radius:6px;margin:8px 0;padding:8px}
+</style></head><body>
+<nav><b>India markets & macro</b><a href="__STOCKS__">Stocks</a><a class="on" href="#">Macro</a></nav>
+<main><h1>Markets & macroeconomy</h1><p class="sub">Ten-year trends. Updated weekly, last build __BUILT__. Open "What this means" on any card for plain-language notes.</p>
+<div class="chips" id="chips"></div><div id="root"></div></main>
+<script>
+const D=__DATA__;const secs=[...new Set(D.map(d=>d.section))];let cur="All";
+const chips=document.getElementById("chips");
+["All",...secs].forEach(s=>{const b=document.createElement("button");b.textContent=s;b.onclick=()=>{cur=s;draw()};chips.append(b)});
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n);
+const fmt=v=>v>=1000?v.toLocaleString("en-IN",{maximumFractionDigits:0}):v.toFixed(2);
+let charts=[];
+function draw(){charts.forEach(c=>c.destroy());charts=[];
+ [...chips.children].forEach(b=>b.classList.toggle("on",b.textContent==cur));
+ const root=document.getElementById("root");root.innerHTML="";
+ secs.filter(s=>cur=="All"||s==cur).forEach(s=>{
+  root.insertAdjacentHTML("beforeend",`<h2>${s}</h2><div class="grid" id="g-${s.replace(/\W/g,"")}"></div>`);
+  const g=document.getElementById("g-"+s.replace(/\W/g,""));
+  D.filter(d=>d.section==s).forEach(d=>{
+   const n=d.values.length,last=d.values[n-1],ago=d.values[Math.max(0,n-1-(d.freq.startsWith("Weekly")?52:d.freq.startsWith("Monthly")?12:1))];
+   const ch=n>1?((last/ago-1)*100):null,cl=ch>=0?"up":"dn";
+   const head=n?`<span class="big">${fmt(last)}</span> <span class="meta">${d.unit}</span>${ch!==null?`<span class="chg ${cl}">${ch>=0?"+":""}${ch.toFixed(1)}% vs 1 period-year ago</span>`:""}`:`<span class="meta">No data yet</span>`;
+   const body=n?`<div class="ch"><canvas></canvas></div>`:`<div class="empty">Add rows to data/manual/${d.id}.csv (date,value) or check the source below, then rebuild.</div>`;
+   const el=document.createElement("div");el.className="card";
+   el.innerHTML=`<h3>${d.title}</h3>${head}${body}<div class="meta">Source: <a href="${d.url}" target="_blank" rel="noopener">${d.source}</a> · ${d.freq}${n?` · latest ${d.dates[n-1]}`:""}</div><details><summary>What this means</summary><p>${d.note}</p></details>`;
+   g.append(el);
+   if(n)charts.push(new Chart(el.querySelector("canvas"),{type:"line",data:{labels:d.dates,datasets:[{data:d.values,borderColor:css("--acc"),borderWidth:1.6,pointRadius:0,tension:.15}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:6,color:css("--mut"),callback(v){return this.getLabelForValue(v).slice(0,4)}},grid:{display:false}},y:{ticks:{maxTicksLimit:4,color:css("--mut")},grid:{color:css("--line")}}}}}));
+  })})}
+draw();
+</script></body></html>
