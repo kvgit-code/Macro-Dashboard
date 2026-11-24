@@ -118,5 +118,6 @@ for mid, sec, title, unit, fn, arg, src, url, freq, note in M:
 html = (ROOT / "template.html").read_text()
 html = html.replace("__DATA__", json.dumps(out)).replace("__STOCKS__", os.getenv("STOCKS_URL") or "#")
 html = html.replace("__BUILT__", dt.date.today().strftime("%d %b %Y"))
+(ROOT / "docs").mkdir(exist_ok=True)
 (ROOT / "docs" / "index.html").write_text(html)
 print("Built", len(out), "metrics;", sum(1 for o in out if o["values"]), "with data")
